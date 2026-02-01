@@ -324,6 +324,23 @@ limitpal/
 
 ---
 
+---
+
+## Documentation
+
+Full documentation: **[limitpal.readthedocs.io](https://limitpal.readthedocs.io/)** (after connecting the repo to [Read the Docs](https://readthedocs.org/) — sign in with GitHub, **Import a Project**, select the repo, leave defaults; RtD will use `.readthedocs.yaml` and build with `pip install -e ".[docs]"` + `mkdocs build`).
+
+To build and serve the docs locally:
+
+```bash
+uv sync --group dev
+mkdocs serve
+```
+
+Open http://127.0.0.1:8000 . To build static HTML: `mkdocs build` (output in `site/`).
+
+---
+
 ## License
 
 MIT

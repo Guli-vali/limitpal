@@ -26,11 +26,17 @@ classifiers = [
 
 dependencies = []
 
+[project.optional-dependencies]
+docs = [
+    "mkdocs>=1.5",
+    "mkdocs-material>=9.5",
+]
+
 [project.urls]
 Homepage = "https://github.com/Guli-vali/limitpal"
 Repository = "https://github.com/Guli-vali/limitpal"
 Issues = "https://github.com/Guli-vali/limitpal/issues"
-Documentation = "https://github.com/Guli-vali/limitpal#readme"
+Documentation = "https://limitpal.readthedocs.io/"
 
 [build-system]
 requires = ["hatchling"]
@@ -88,4 +94,6 @@ dev = [
     "ruff>=0.4",
     "black>=24.0",
     "ipython>=8.38.0",
+    "mkdocs>=1.5",
+    "mkdocs-material>=9.5",
 ]
