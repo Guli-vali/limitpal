@@ -1,0 +1,17 @@
+{
+  "include": [
+    "limitpal",
+    "tests"
+  ],
+  "exclude": [
+    "**/__pycache__",
+    "**/node_modules",
+    ".venv",
+    "venv"
+  ],
+  "extraPaths": [
+    "."
+  ],
+  "pythonVersion": "3.10",
+  "typeCheckingMode": "basic"
+}
