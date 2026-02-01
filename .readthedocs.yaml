@@ -3,6 +3,10 @@
 
 version: 2
 
+# Required: explicitly declare MkDocs (avoids "sphinx.configuration key is missing" error)
+mkdocs:
+  configuration: mkdocs.yml
+
 build:
   os: ubuntu-22.04
   tools:
