@@ -162,9 +162,7 @@ class LeakyBucket(SyncLimiter):
 
         return lock
 
-    def _get_or_create_bucket(
-        self, key: str, now: float
-    ) -> tuple[_LeakyBucketState, bool]:
+    def _get_or_create_bucket(self, key: str, now: float) -> tuple[_LeakyBucketState, bool]:
         """Get existing bucket or create one; return (bucket, created)."""
         with self._buckets_lock:
             bucket = self._buckets.get(key)
@@ -196,11 +194,7 @@ class LeakyBucket(SyncLimiter):
                 bucket = self._buckets.get(key)
                 if bucket is None:
                     return False
-                if (
-                    ttl_check
-                    and self._ttl is not None
-                    and now - bucket.last_used <= self._ttl
-                ):
+                if ttl_check and self._ttl is not None and now - bucket.last_used <= self._ttl:
                     return False
                 del self._buckets[key]
                 self._locks.pop(key, None)
@@ -208,9 +202,7 @@ class LeakyBucket(SyncLimiter):
         finally:
             lock.release()
 
-    def _cleanup(
-        self, now: float, target_size: int | None = None
-    ) -> None:
+    def _cleanup(self, now: float, target_size: int | None = None) -> None:
         """Evict TTL-expired buckets, then LRU-evict to target_size if set."""
         if self._ttl is None and target_size is None:
             return
@@ -234,9 +226,7 @@ class LeakyBucket(SyncLimiter):
 
         expired_set = set(expired_keys)
         eviction_candidates = [
-            (bucket.last_used, key)
-            for key, bucket in items
-            if key not in expired_set
+            (bucket.last_used, key) for key, bucket in items if key not in expired_set
         ]
         to_evict = current_count - target_size
         for _, key in heapq.nsmallest(to_evict, eviction_candidates):

@@ -305,9 +305,7 @@ class TokenBucket(SyncLimiter):
         # Then evict least-recently-used buckets by last_used.
         expired_set = set(expired_keys)
         eviction_candidates = [
-            (bucket.last_used, key)
-            for key, bucket in items
-            if key not in expired_set
+            (bucket.last_used, key) for key, bucket in items if key not in expired_set
         ]
         to_evict = current_count - target_size
         for _, key in heapq.nsmallest(to_evict, eviction_candidates):
