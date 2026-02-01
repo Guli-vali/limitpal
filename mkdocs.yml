@@ -1,0 +1,60 @@
+# MkDocs configuration for LimitPal documentation
+# Build: mkdocs build | Serve locally: mkdocs serve
+
+site_name: LimitPal
+site_description: A fast, modular rate limiting library for Python with sync and async support.
+site_url: https://limitpal.readthedocs.io/  # or your custom domain
+
+repo_name: limitpal
+repo_url: https://github.com/Guli-vali/limitpal
+edit_uri: edit/main/docs/
+
+theme:
+  name: material
+  language: en
+  palette:
+    - scheme: default
+      primary: indigo
+      accent: amber
+      toggle:
+        icon: material/brightness-7
+        name: Switch to dark mode
+    - scheme: slate
+      primary: indigo
+      accent: amber
+      toggle:
+        icon: material/brightness-4
+        name: Switch to light mode
+  features:
+    - navigation.instant
+    - navigation.tracking
+    - navigation.tabs
+    - navigation.sections
+    - toc.integrate
+    - search.suggest
+    - search.highlight
+  icon:
+    repo: fontawesome/brands/github
+
+plugins:
+  - search
+
+nav:
+  - Home: index.md
+  - Quick Start: quickstart.md
+  - Guides:
+    - Algorithms: guides/algorithms.md
+    - Resilience: guides/resilience.md
+    - Testing: guides/testing.md
+  - API Reference:
+    - Limiters: api/limiters.md
+    - Composite: api/composite.md
+    - Exceptions: api/exceptions.md
+  - Examples:
+    - FastAPI: examples/fastapi.md
+
+markdown_extensions:
+  - tables
+  - pymdownx.highlight:
+      anchor_linenums: true
+  - pymdownx.superfences
