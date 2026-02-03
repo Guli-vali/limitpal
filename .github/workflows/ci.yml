@@ -36,4 +36,9 @@ jobs:
         run: uv run mypy limitpal
 
       - name: Pytest
-        run: uv run pytest tests/ -v
+        run: uv run pytest tests/ -v --cov=limitpal --cov-report=xml --cov-report=term-missing
+
+      - name: Upload coverage to Codecov
+        uses: codecov/codecov-action@v5
+        with:
+            token: ${{ secrets.CODECOV_TOKEN }}

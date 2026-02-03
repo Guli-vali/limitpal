@@ -1,5 +1,10 @@
 # LimitPal
 
+![PyPI version](https://badge.fury.io/py/limitpal.svg)
+![Tests](https://github.com/Guli-vali/limitpal/actions/workflows/ci.yml/badge.svg?branch=master)
+![Coverage](https://codecov.io/gh/Guli-vali/limitpal/branch/master/graph/badge.svg)
+![Python versions](https://img.shields.io/pypi/pyversions/limitpal.svg)
+
 **Your friendly Python rate limiter**
 
 A fast, modular rate limiting library for Python with sync and async support. In-memory, zero dependencies, thread-safe.
