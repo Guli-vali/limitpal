@@ -237,8 +237,6 @@ class AsyncLeakyBucket(AsyncLimiter):
                 bucket.count -= leaked_count
                 bucket.leak_accumulator = leaked_total - leaked_count
             bucket.last_leak = now
-        else:
-            bucket.leak_accumulator = leaked_total
 
     def _try_add(self, bucket: _LeakyBucketState) -> bool:
         """Try to add one request; return True if added, False if full."""
