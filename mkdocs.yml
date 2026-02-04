@@ -51,6 +51,7 @@ nav:
     - Composite: api/composite.md
     - Exceptions: api/exceptions.md
   - Examples:
+    - Cookbook: cookbook.md
     - FastAPI: examples/fastapi.md
 
 markdown_extensions:

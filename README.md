@@ -5,10 +5,41 @@
 ![Coverage](https://codecov.io/gh/Guli-vali/limitpal/branch/master/graph/badge.svg)
 ![Python versions](https://img.shields.io/pypi/pyversions/limitpal.svg)
 
-**Your friendly Python rate limiter**
+**Your friendly Python resilient execution toolkit**
 
-A fast, modular rate limiting library for Python with sync and async support. In-memory, zero dependencies, thread-safe.
+A fast, modular resilient execution toolkit for Python with **sync** and **async** support. In-memory, zero dependencies, thread-safe.
 
+## Features
+
+- **Resilience**: combine retry, circuit breaker and rate-limiters in one executor
+- **Composite limiters** (combine multiple limiters for burst control)
+- **Token Bucket** and **Leaky Bucket** algorithms
+- **Sync** and **async** APIs for all the functionality
+- **MockClock** for deterministic tests
+- No external dependencies, Python ≥ 3.10
+
+## When to use LimitPal
+
+**Good fit**
+
+- Building API clients that need fault tolerance (rate limiting + retry + circuit breaker)
+- Integrating with unreliable third-party services
+- Microservices communication with backpressure (blocking `acquire`)
+- Background job processing with rate control
+
+**Not a fit**
+
+- Simple rate limiting without retry logic → use `limits`
+- Distributed rate limiting across servers → use a Redis-backed solution.
+
+**Comparison to other solutions**
+| Feature | LimitPal | limits | slowapi | tenacity |
+|---------|----------|--------|---------|----------|
+| Rate Limiting | ✅ | ✅ | ✅ | ❌ |
+| Retry Logic | ✅ | ❌ | ❌ | ✅ |
+| Circuit Breaker | ✅ | ❌ | ❌ | ❌ |
+| Async Support | ✅ | ✅ | ✅ | ✅ |
+| Distributed(at least for now 😊) | ❌ | ✅ | ❌ | ❌ |
 ---
 
 ## Installation
@@ -27,56 +58,107 @@ uv add limitpal
 
 ## Quick Start
 
-### Token Bucket (allows bursts)
+### ResilientExecutor  (async/sync ready)
+Combine Limiting + Retry + CircuitBreaker + BurstControl strategies in one executor
+
+```python
+""" Async example """
+
+from limitpal import AsyncResilientExecutor, AsyncTokenBucket, CircuitBreaker, RetryPolicy
+
+# Async rate limiting for burst control.
+limiter = AsyncTokenBucket(capacity=5, refill_rate=10)
+# Async retries with the same policy.
+retry = RetryPolicy(max_attempts=3, base_delay=0.2, backoff=2.0)
+# Same breaker semantics in async workflows.
+breaker = CircuitBreaker(failure_threshold=3, recovery_timeout=5.0)
+
+# Async executor wraps limiter + retry + breaker.
+executor = AsyncResilientExecutor(
+    limiter=limiter,
+    retry_policy=retry,
+    circuit_breaker=breaker,
+)
+
+# Your real-world async call.
+async def call_api() -> str:
+    return await request_external_service()
+
+# Run with async protection.
+result = await executor.run("user:123", call_api)
+```
+
+### allow / acquire (same API in sync/async)
+
+`allow()` is non-blocking: it answers “can I proceed right now?”.  
+`acquire()` waits for quota (or until `timeout`) and then proceeds.  
+Async versions have the same contract — only `await` differs.
 
 ```python
 from limitpal import TokenBucket
 
-limiter = TokenBucket(capacity=5, refill_rate=10)
+limiter = TokenBucket(capacity=2, refill_rate=1)
 
 if limiter.allow("user:123"):
     process_request()
 else:
     return "Rate limited"
+
+limiter.acquire("user:123", timeout=2.0)  # wait until a token is available
+process_request()
 ```
-
-### Leaky Bucket (smooth rate)
-
-```python
-from limitpal import LeakyBucket
-
-limiter = LeakyBucket(capacity=10, leak_rate=5)
-
-if limiter.allow("user:123"):
-    process_request()
-```
-
-### Blocking mode (acquire)
-
-```python
-from limitpal import TokenBucket, RateLimitExceeded
-
-limiter = TokenBucket(capacity=1, refill_rate=10)
-
-try:
-    limiter.acquire("user:123", timeout=5.0)
-    process_request()
-except RateLimitExceeded as e:
-    print(f"Retry after {e.retry_after}s")
-```
-
-### Async
 
 ```python
 from limitpal import AsyncTokenBucket
 
-limiter = AsyncTokenBucket(capacity=5, refill_rate=10)
+limiter = AsyncTokenBucket(capacity=2, refill_rate=1)
 
-if await limiter.allow("user:456"):
+if await limiter.allow("user:123"):
     await process_request()
+else:
+    return "Rate limited"
 
-# Or block until allowed
-await limiter.acquire("user:456", timeout=5.0)
+await limiter.acquire("user:123", timeout=2.0)
+await process_request()
+```
+
+### Key-based limiting (per-user, per-IP, per-tenant)
+
+Limiters keep separate buckets per key. Use keys to isolate users, IPs, or
+any other dimension you need.
+
+```python
+from limitpal import TokenBucket
+
+limiter = TokenBucket(capacity=2, refill_rate=1)
+
+# user:123 has its own bucket
+limiter.allow("user:123")
+limiter.allow("user:123")  # consumes user:123 quota
+limiter.allow("user:123")  # likely False (rate limited)
+
+# user:456 is independent
+limiter.allow("user:456")  # allowed, separate bucket
+```
+
+
+### Composite limiters (combine strategies)
+
+Use this when you need **both** burst control *and* a smooth global throughput
+limit at the same time. All limiters must allow the request. (Sync/Async)
+
+```python
+from limitpal import AsyncCompositeLimiter, AsyncLeakyBucket, AsyncTokenBucket
+
+per_user = AsyncTokenBucket(capacity=10, refill_rate=5)
+global_smooth = AsyncLeakyBucket(capacity=50, leak_rate=20)
+
+limiter = AsyncCompositeLimiter([per_user, global_smooth])
+
+if await limiter.allow("user:123"):
+    await process_request()
+else:
+    return "Rate limited"
 ```
 
 ---
@@ -172,17 +254,6 @@ if limiter.allow("user:123"):
 | `acquire(key, timeout)` | Block until all allow |
 | `limiters` | Tuple of underlying limiters |
 
-### Per-user + global
-
-```python
-from limitpal import TokenBucket
-
-user_limiter = TokenBucket(capacity=5, refill_rate=5)
-global_limiter = TokenBucket(capacity=100, refill_rate=100)
-
-if user_limiter.allow("user:123") and global_limiter.allow("global"):
-    process_request()
-```
 
 ---
 
@@ -190,30 +261,24 @@ if user_limiter.allow("user:123") and global_limiter.allow("global"):
 
 ### ResilientExecutor / AsyncResilientExecutor
 
-Run callables with optional rate limiting, retry, and circuit breaker. All components are optional.
+API reference (all parameters are optional):
 
 ```python
-from limitpal import (
-    TokenBucket,
-    ResilientExecutor,
-    RetryPolicy,
-    CircuitBreaker,
+ResilientExecutor(
+    limiter: SyncLimiter | None = None,
+    retry_policy: RetryPolicy | None = None,
+    circuit_breaker: CircuitBreaker | None = None,
+    clock: Clock | None = None,
 )
+```
 
-limiter = TokenBucket(capacity=5, refill_rate=10)
-retry = RetryPolicy(max_attempts=3, base_delay=0.2, backoff=2.0)
-breaker = CircuitBreaker(failure_threshold=3, recovery_timeout=5.0)
-
-executor = ResilientExecutor(
-    limiter=limiter,
-    retry_policy=retry,
-    circuit_breaker=breaker,
+```python
+AsyncResilientExecutor(
+    limiter: AsyncLimiter | None = None,
+    retry_policy: RetryPolicy | None = None,
+    circuit_breaker: CircuitBreaker | None = None,
+    clock: Clock | None = None,
 )
-
-def call_api() -> str:
-    return requests.get("https://api.example.com").text
-
-result = executor.run("api", call_api)
 ```
 
 ### RetryPolicy
@@ -286,26 +351,6 @@ try:
 except InvalidConfigError as e:
     print(e.parameter, e.value, e.reason)
 ```
-
----
-
-## Web Framework Example (FastAPI)
-
-```python
-from fastapi import FastAPI, HTTPException, Request
-from limitpal import AsyncTokenBucket
-
-app = FastAPI()
-limiter = AsyncTokenBucket(capacity=10, refill_rate=5)
-
-@app.middleware("http")
-async def rate_limit_middleware(request: Request, call_next):
-    key = f"ip:{request.client.host}"
-    if not await limiter.allow(key):
-        raise HTTPException(status_code=429, detail="Too many requests")
-    return await call_next(request)
-```
-
 ---
 
 ## Project Structure
