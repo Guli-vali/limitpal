@@ -47,16 +47,3 @@ LeakyBucket(
 
 Async: use `AsyncLeakyBucket`; `allow` and `acquire` are async.
 
----
-
-## Per-user + global
-
-```python
-from limitpal import TokenBucket
-
-user_limiter = TokenBucket(capacity=5, refill_rate=5)
-global_limiter = TokenBucket(capacity=100, refill_rate=100)
-
-if user_limiter.allow("user:123") and global_limiter.allow("global"):
-    process_request()
-```

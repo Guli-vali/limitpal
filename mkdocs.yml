@@ -43,16 +43,16 @@ nav:
   - Home: index.md
   - Quick Start: quickstart.md
   - Guides:
-    - Algorithms: guides/algorithms.md
     - Resilience: guides/resilience.md
+    - Algorithms: guides/algorithms.md
     - Testing: guides/testing.md
   - API Reference:
+    - Resilence: api/resilience.md
     - Limiters: api/limiters.md
     - Composite: api/composite.md
     - Exceptions: api/exceptions.md
-  - Examples:
+  - Cookbook:
     - Cookbook: cookbook.md
-    - FastAPI: examples/fastapi.md
 
 markdown_extensions:
   - tables
