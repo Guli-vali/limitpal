@@ -30,8 +30,16 @@ A fast, modular resilient execution toolkit for Python with **sync** and **async
 **Not a fit**
 
 - Simple rate limiting without retry logic → use `limits`
-- Distributed rate limiting across servers → use a Redis-backed solution `throttled-py` etc.
+- Distributed rate limiting across servers → use a Redis-backed solution.
 
+**Comparison to other solutions**
+| Feature | LimitPal | limits | slowapi | tenacity |
+|---------|----------|--------|---------|----------|
+| Rate Limiting | ✅ | ✅ | ✅ | ❌ |
+| Retry Logic | ✅ | ❌ | ❌ | ✅ |
+| Circuit Breaker | ✅ | ❌ | ❌ | ❌ |
+| Async Support | ✅ | ✅ | ✅ | ✅ |
+| Distributed(at least for now 😊) | ❌ | ✅ | ❌ | ❌ |
 ---
 
 ## Installation
